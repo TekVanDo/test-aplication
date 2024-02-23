@@ -24,8 +24,6 @@ export class UploadService {
         ContentLength: file.size
       })
     ).then(((data) => {
-      console.log(data, 'data');
-      console.log('url', `https://${s3Config.assetsBucketName}.s3.${s3Config.assetsPublicRegion}.amazonaws.com/${imageName}`);
       return `https://${s3Config.assetsBucketName}.s3.${s3Config.assetsPublicRegion}.amazonaws.com/${imageName}`;
     }));
   }
