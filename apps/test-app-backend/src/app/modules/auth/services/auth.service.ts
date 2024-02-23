@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger, UnauthorizedException, } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException, } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Config } from '../../../common/configs/config.interface';
@@ -7,15 +7,13 @@ import { PasswordService } from './password.service';
 import { AccessTokenPayload, TokenResponse } from '@test-app/api-interfaces/lib/interfaces/auth';
 import { ClientService } from '../../queries/services/client.service';
 import { User } from '../../queries/entities/user';
-import { S3_CLIENT } from '../tokens';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { Multer } from 'multer';
 type File = Express.Multer.File;
-import { randomUUID } from 'crypto';
 import { Photo } from '../../queries/entities/photo';
 import { Client } from '../../queries/entities/client';
 import { DataSource } from 'typeorm';
 import { ValidationException } from '../../../common/errors/validationException';
+import { UploadService } from '../../upload/services/upload.service';
 
 @Injectable()
 export class AuthService {
@@ -26,7 +24,7 @@ export class AuthService {
     private logger: Logger,
     private usersService: ClientService,
     private dataSource: DataSource,
-    @Inject(S3_CLIENT) private s3Client: S3Client,
+    private uploadService: UploadService,
   ) {
   }
 
@@ -35,21 +33,6 @@ export class AuthService {
     return this.loginResponse(user);
   }
 
-  private async uploadFile(file: Express.Multer.File) {
-    const imageName = `${randomUUID()}-${file.originalname}`;
-    const s3Config = this.configService.get('s3', { infer: true });
-    return this.s3Client.send(
-      new PutObjectCommand({
-        Bucket: s3Config.assetsBucketName,
-        Key: imageName,
-        Body: file.buffer,
-        ContentType: file.mimetype,
-        ContentLength: file.size
-      })
-    ).then((() => {
-      return `https://${s3Config.assetsBucketName}.s3.${s3Config.assetsPublicRegion}.amazonaws.com/${imageName}`;
-    }));
-  }
 
   async createUser(payload: RegisterDto, photos?: Express.Multer.File[]): Promise<any> {
     const user = await this.usersService.findOneBy({ email: payload.email });
@@ -69,7 +52,7 @@ export class AuthService {
       newClient.fullName = payload.firstName + ' ' + payload.lastName;
       newClient.avatar = 'https://i.pinimg.com/736x/32/7e/db/327edb9a15b304efc264668ada03f725.jpg';
       newClient.role = 'client';
-      newClient.photos = await Promise.all(photos.map((picture) => this.uploadFile(picture)
+      newClient.photos = await Promise.all(photos.map((picture) => this.uploadService.uploadFile(picture)
         .then((one) => {
           const photo = new Photo();
           photo.url = one;

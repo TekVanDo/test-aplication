@@ -6,13 +6,10 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { SharedModule } from '../shared/shared.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { QueriesModule } from '../queries/queries.module';
-import { ConfigService } from '@nestjs/config';
-import { S3_CLIENT } from './tokens';
-import { Config } from '../../common/configs/config.interface';
-import { S3Client } from '@aws-sdk/client-s3';
+import { UploadModule } from '../upload/upload.module';
 
 @Module({
-  imports: [SharedModule, QueriesModule, TypeOrmModule.forFeature([])],
+  imports: [SharedModule, QueriesModule, TypeOrmModule.forFeature([]), UploadModule],
   controllers: [AuthController],
   exports: [],
   providers: [
@@ -20,20 +17,7 @@ import { S3Client } from '@aws-sdk/client-s3';
     PasswordService,
     JwtStrategy,
     Logger,
-    {
-      provide: S3_CLIENT,
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService<Config>) => {
-        const s3 = configService.get('s3', { infer: true });
-        return new S3Client({
-          region: s3.assetsPublicRegion,
-          credentials: {
-            secretAccessKey: s3.keySecret,
-            accessKeyId: s3.keyId
-          },
-        });
-      },
-    },
+
   ],
 })
 export class AuthModule {
