@@ -14,8 +14,9 @@ Run `npm i`
 
 ## Start the app
 
-use to run backend `start:api`
-use to run frontend `start:frontend`
+use to run backend `npm run start:api`
+
+use to run frontend `npm run start:frontend`
 
 
 
