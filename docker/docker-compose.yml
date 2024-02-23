@@ -1,0 +1,13 @@
+version: "3.7"
+services:
+    arcade-postgres:
+      image: postgres:14
+      container_name: test-app-postgres
+      env_file:
+        - .env
+      ports:
+        - "${PG_PORT:-5432}:5432"
+      volumes:
+        - test-app-pgdata:/var/lib/postgresql/data
+volumes:
+  test-app-pgdata:
