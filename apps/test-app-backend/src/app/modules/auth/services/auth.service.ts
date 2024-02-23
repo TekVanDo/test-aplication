@@ -7,16 +7,15 @@ import { PasswordService } from './password.service';
 import { AccessTokenPayload, TokenResponse } from '@test-app/api-interfaces/lib/interfaces/auth';
 import { ClientService } from '../../queries/services/client.service';
 import { User } from '../../queries/entities/user';
-import { ValidationException } from '../../../common/errors/ValidationException';
 import { S3_CLIENT } from '../tokens';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { Multer } from 'multer';
-
 type File = Express.Multer.File;
 import { randomUUID } from 'crypto';
 import { Photo } from '../../queries/entities/photo';
 import { Client } from '../../queries/entities/client';
 import { DataSource } from 'typeorm';
+import { ValidationException } from '../../../common/errors/validationException';
 
 @Injectable()
 export class AuthService {
@@ -53,6 +52,13 @@ export class AuthService {
   }
 
   async createUser(payload: RegisterDto, photos?: Express.Multer.File[]): Promise<any> {
+    const user = await this.usersService.findOneBy({ email: payload.email });
+    if (user) {
+      throw new ValidationException(`Email ${payload.email} already used.`, 'uniqueEmail', 'email', {
+        email: payload.email,
+      });
+    }
+
     const hashedPassword = payload.password ? await this.passwordService.hashPassword(payload.password) : '';
     try {
       const newClient = new Client();
