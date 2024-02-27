@@ -29,6 +29,9 @@ export class AuthService {
   }
 
   async register(payload: RegisterDto, pictures?: Express.Multer.File[]): Promise<TokenResponse> {
+    if (!pictures || pictures.length < 4) {
+      throw new ValidationException(`Minimum number of pictures is 4.`, 'minPictures', 'pictures');
+    }
     const user = await this.createUser(payload, pictures);
     return this.loginResponse(user);
   }
